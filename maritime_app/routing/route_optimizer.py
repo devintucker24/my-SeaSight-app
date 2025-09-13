@@ -475,36 +475,20 @@ class EnhancedSailingCalculator:
                     if "features" in geo:
                         for feat in geo.get("features", []):
                             try:
-                                # Ensure geometries are valid and not None before appending
-                                geom = shape(feat["geometry"])
-                                if geom and not geom.is_empty:
-                                    geoms.append(geom)
-                            except Exception as parse_err:
-                                print(f"Error parsing geometry from feature: {parse_err}")
+                                geoms.append(shape(feat["geometry"]))
+                            except Exception:
                                 continue
-                    elif geo.get("geometry"):
+                    else:
                         # FeatureCollection-less single geometry
                         try:
-                            geom = shape(geo.get("geometry", geo))
-                            if geom and not geom.is_empty:
-                                geoms.append(geom)
-                        except Exception as parse_err:
-                            print(f"Error parsing geometry from single feature: {parse_err}")
+                            geoms.append(shape(geo.get("geometry", geo)))
+                        except Exception:
                             pass
-                    
                     if geoms:
                         unbuffered_land_union = unary_union(geoms)
                         self._land_union = unbuffered_land_union.buffer(self.min_offing_deg)
-                        if self._land_union and not self._land_union.is_empty:
-                            with open(cached_land_buffer_path, "w") as f:
-                                json.dump(self._land_union.__geo_interface__, f)
-                            print(f"Cached buffered land union to {cached_land_buffer_path}")
-                        else:
-                            print("Warning: Buffered land union is empty or invalid after generation.")
-                    else:
-                        print("Warning: No valid geometries found in coastlines file.")
-            else:
-                print(f"Coastlines file not found at {self.coastlines_path}. Land avoidance may be limited.")
+                        with open(cached_land_buffer_path, "w") as f:
+                            json.dump(self._land_union.__geo_interface__, f)
 
             if self.mdata_path.exists():
                 with open(self.mdata_path, "r") as f:
