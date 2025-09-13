@@ -90,5 +90,28 @@ class Settings(BaseSettings):
         "lng": "LNG carrier", "passenger": "Passenger vessel", "other": "Other"
     }
 
+    # Charts and navigation policy (US-first)
+    CHARTS_DIR: str = str(BASE_DIR / "maritime_app" / "charts")
+    COASTLINES_GEOJSON: str = "coastlines.geojson"      # fallback to any *coastline*.json if missing
+    CACHED_LAND_BUFFER_GEOJSON: str = "_cached_land_buffer.json" # Cached buffered land union
+    MARITIME_DATA_JSON: str = "maritime_data.json"      # curated pilotage/sea buoys/TSS
+    MIN_OFFING_NM: float = 3.0                          # minimum offing from land
+    DEFAULT_VESSEL_DRAFT_M: float = 10.5                # company policy default
+    UKC_DEFAULT_M: float = 0.6                          # default under-keel clearance (user configurable)
+    TSS_ENFORCEMENT: str = "enforce"                    # "prefer" | "enforce"
+    OPTIMIZE_INSIDE_PILOTAGE: bool = False              # no optimization in pilotage waters
+    
+    # NOAA ENC Layer paths (relative to CHARTS_DIR, will be created by enc_loader.py)
+    TSS_CORRIDORS_GEOJSON: str = "noaa_tss_corridors.json"
+    SEA_BUOYS_GEOJSON: str = "noaa_sea_buoys.json"
+    PILOTAGE_ZONES_GEOJSON: str = "noaa_pilotage_zones.json"
+    RESTRICTED_AREAS_GEOJSON: str = "noaa_restricted_areas.json"
+    DEPTH_AREAS_GEOJSON: str = "noaa_depth_areas.json"
+    WRECKS_OBSTRUCTIONS_GEOJSON: str = "noaa_wrecks_obstructions.json"
+    PIPELINES_CABLES_GEOJSON: str = "noaa_pipelines_cables.json"
+    
+    # Safety depth and contour settings
+    SAFETY_DEPTH_MARGIN_M: float = 2.0                  # margin for safety contour beyond shallow contour
+
 # Instantiate the settings object to be used throughout the application
 settings = Settings()

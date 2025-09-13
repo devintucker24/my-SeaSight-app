@@ -1,0 +1,18 @@
+{
+  "source": "NOAA ENC Direct-to-GIS (west_coast)",
+  "generated": "2025-09-13 21:18:27 UTC",
+  "region": "west_coast",
+  "bbox": [
+    -126.0,
+    31.0,
+    -117.0,
+    49.0
+  ],
+  "tss_corridors_file": "noaa_tss_corridors.json",
+  "sea_buoys_file": "noaa_sea_buoys.json",
+  "pilotage_zones_file": "noaa_pilotage_zones.json",
+  "restricted_areas_file": "noaa_restricted_areas.json",
+  "depth_areas_file": "noaa_depth_areas.json",
+  "wrecks_obstructions_file": "noaa_wrecks_obstructions.json",
+  "pipelines_cables_file": "noaa_pipelines_cables.json"
+}

@@ -9,6 +9,8 @@ let weatherMarkers = [];
 let currentRoute = null;
 let websocket = null;
 let isConnected = false;
+let weatherMap = null;
+let vesselsMap = null;
 
 // Initialize the application
 async function initApp() {
@@ -21,6 +23,9 @@ async function initApp() {
     await loadWeather();
     await loadVessels();
     await loadSystemStatus();
+    
+    // Load vessels on main map
+    await loadVesselsOnMainMap();
 
     // Setup WebSocket connection
     setupWebSocket();
@@ -342,15 +347,31 @@ function handleMapClick(e) {
 }
 
 // Add route to history
-function addToRouteHistory(route) {
+function addToRouteHistory(routeData) {
     const historyContainer = document.getElementById('route-history');
+
+    // Validate route data
+    if (!routeData || !routeData.route || !Array.isArray(routeData.route) || routeData.route.length < 2) {
+        console.error('Invalid route data for history:', routeData);
+        return;
+    }
+
+    // Extract start and end coordinates from the route array
+    const startPoint = routeData.route[0];
+    const endPoint = routeData.route[routeData.route.length - 1];
+
+    // Validate coordinates
+    if (!startPoint || !endPoint || startPoint.length < 2 || endPoint.length < 2) {
+        console.error('Invalid route coordinates:', { startPoint, endPoint });
+        return;
+    }
 
     const routeItem = document.createElement('div');
     routeItem.className = 'route-item';
     routeItem.innerHTML = `
-        <strong>${route.start_lat.toFixed(2)}, ${route.start_lon.toFixed(2)}</strong> →
-        <strong>${route.end_lat.toFixed(2)}, ${route.end_lon.toFixed(2)}</strong>
-        <br><small>${route.total_distance_nm.toFixed(1)} nm | ${route.estimated_time_hours.toFixed(1)} hrs</small>
+        <strong>${startPoint[0].toFixed(2)}, ${startPoint[1].toFixed(2)}</strong> →
+        <strong>${endPoint[0].toFixed(2)}, ${endPoint[1].toFixed(2)}</strong>
+        <br><small>${routeData.total_distance_nm?.toFixed(1) || 'N/A'} nm | ${routeData.estimated_time_hours?.toFixed(1) || 'N/A'} hrs</small>
     `;
 
     historyContainer.insertBefore(routeItem, historyContainer.firstChild);
@@ -456,6 +477,265 @@ function showAlert(message, type = 'info') {
     }, 5000);
 }
 
+// Tab switching functionality
+function showTab(tabName) {
+    // Hide all tabs
+    const tabs = document.querySelectorAll('.tab-pane');
+    tabs.forEach(tab => {
+        tab.style.display = 'none';
+    });
+
+    // Remove active class from all nav links
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+    });
+
+    // Show selected tab
+    const selectedTab = document.getElementById(tabName + '-tab');
+    if (selectedTab) {
+        selectedTab.style.display = 'block';
+    }
+
+    // Add active class to clicked nav link
+    const activeLink = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+    if (activeLink) {
+        activeLink.classList.add('active');
+    }
+
+    // Initialize maps for specific tabs
+    if (tabName === 'weather' && !weatherMap) {
+        initWeatherMap();
+    } else if (tabName === 'vessels' && !vesselsMap) {
+        initVesselsMap();
+    }
+
+    console.log(`Switched to ${tabName} tab`);
+}
+
+// Initialize weather map
+function initWeatherMap() {
+    if (weatherMap) return;
+    
+    weatherMap = L.map('weather-map').setView([37.7749, -122.4194], 8);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 18,
+    }).addTo(weatherMap);
+
+    // Add weather data visualization
+    loadWeatherOverlay();
+}
+
+// Initialize vessels map
+function initVesselsMap() {
+    if (vesselsMap) return;
+    
+    vesselsMap = L.map('vessels-map').setView([37.7749, -122.4194], 8);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 18,
+    }).addTo(vesselsMap);
+
+    // Load and display vessels
+    loadVesselsOnMap();
+}
+
+// Load weather overlay on weather map
+async function loadWeatherOverlay() {
+    if (!weatherMap) return;
+    
+    try {
+        const response = await fetch('/api/weather/current');
+        const weather = await response.json();
+        
+        // Add weather marker
+        const weatherIcon = L.divIcon({
+            html: `<div class="weather-marker">
+                <i class="fas fa-cloud-sun"></i>
+                <div class="weather-info">
+                    <div>Wind: ${weather.wind_speed_kts.toFixed(1)} kts</div>
+                    <div>Waves: ${weather.wave_height_m.toFixed(1)}m</div>
+                </div>
+            </div>`,
+            className: 'weather-icon',
+            iconSize: [40, 40]
+        });
+        
+        L.marker([37.7749, -122.4194], { icon: weatherIcon })
+            .addTo(weatherMap)
+            .bindPopup(`
+                <strong>Current Weather</strong><br>
+                Wind: ${weather.wind_speed_kts.toFixed(1)} kts @ ${weather.wind_direction_deg.toFixed(0)}°<br>
+                Waves: ${weather.wave_height_m.toFixed(1)}m<br>
+                Temp: ${weather.temperature_c.toFixed(1)}°C
+            `);
+            
+    } catch (error) {
+        console.error('Failed to load weather overlay:', error);
+    }
+}
+
+// Load vessels on vessels map
+async function loadVesselsOnMap() {
+    if (!vesselsMap) return;
+    
+    try {
+        const response = await fetch('/api/vessels/nearby');
+        const data = await response.json();
+        
+        // Clear existing vessel markers
+        vesselMarkers.forEach(marker => vesselsMap.removeLayer(marker));
+        vesselMarkers = [];
+        
+        // Add vessel markers with different icons based on type
+        data.vessels.forEach(vessel => {
+            const vesselIcon = getVesselIcon(vessel);
+            const marker = L.marker([vessel.latitude, vessel.longitude], { icon: vesselIcon })
+                .addTo(vesselsMap)
+                .bindPopup(`
+                    <strong>${vessel.name || `MMSI: ${vessel.mmsi}`}</strong><br>
+                    Speed: ${vessel.speed.toFixed(1)} kts<br>
+                    Course: ${vessel.course.toFixed(0)}°<br>
+                    Distance: ${vessel.distance_nm.toFixed(1)} nm
+                `);
+            
+            vesselMarkers.push(marker);
+        });
+        
+        // Fit map to show all vessels
+        if (vesselMarkers.length > 0) {
+            const group = new L.featureGroup(vesselMarkers);
+            vesselsMap.fitBounds(group.getBounds().pad(0.1));
+        }
+        
+    } catch (error) {
+        console.error('Failed to load vessels on map:', error);
+    }
+}
+
+// Get appropriate vessel icon based on vessel type
+function getVesselIcon(vessel) {
+    const vesselType = vessel.name ? vessel.name.toLowerCase() : '';
+    let iconClass = 'fas fa-ship'; // Default
+    
+    if (vesselType.includes('tanker') || vesselType.includes('oil')) {
+        iconClass = 'fas fa-oil-can';
+    } else if (vesselType.includes('container') || vesselType.includes('cargo')) {
+        iconClass = 'fas fa-box';
+    } else if (vesselType.includes('ferry') || vesselType.includes('passenger')) {
+        iconClass = 'fas fa-users';
+    } else if (vesselType.includes('fishing')) {
+        iconClass = 'fas fa-fish';
+    }
+    
+    return L.divIcon({
+        html: `<div class="vessel-marker ${iconClass}">
+            <i class="${iconClass}"></i>
+        </div>`,
+        className: 'vessel-icon',
+        iconSize: [30, 30]
+    });
+}
+
+// Update vessel visualization on main map
+function updateVesselMarkersOnMainMap(vessels) {
+    // Clear existing vessel markers
+    vesselMarkers.forEach(marker => map.removeLayer(marker));
+    vesselMarkers = [];
+    
+    // Add new vessel markers
+    vessels.forEach(vessel => {
+        const vesselIcon = getVesselIcon(vessel);
+        const marker = L.marker([vessel.latitude, vessel.longitude], { icon: vesselIcon })
+            .addTo(map)
+            .bindPopup(`
+                <strong>${vessel.name || `MMSI: ${vessel.mmsi}`}</strong><br>
+                Speed: ${vessel.speed.toFixed(1)} kts<br>
+                Course: ${vessel.course.toFixed(0)}°<br>
+                Distance: ${vessel.distance_nm.toFixed(1)} nm
+            `);
+        
+        vesselMarkers.push(marker);
+    });
+}
+
+// Load vessels on main map
+async function loadVesselsOnMainMap() {
+    try {
+        const response = await fetch('/api/vessels/nearby');
+        const data = await response.json();
+        
+        // Clear existing vessel markers
+        vesselMarkers.forEach(marker => map.removeLayer(marker));
+        vesselMarkers = [];
+        
+        // Add vessel markers with corrected positions (on water)
+        data.vessels.forEach(vessel => {
+            // Ensure vessel is positioned on water
+            const correctedPosition = ensureWaterPosition(vessel.latitude, vessel.longitude);
+            
+            const vesselIcon = getVesselIcon(vessel);
+            const marker = L.marker([correctedPosition.lat, correctedPosition.lon], { icon: vesselIcon })
+                .addTo(map)
+                .bindPopup(`
+                    <strong>${vessel.name || `MMSI: ${vessel.mmsi}`}</strong><br>
+                    Speed: ${vessel.speed.toFixed(1)} kts<br>
+                    Course: ${vessel.course.toFixed(0)}°<br>
+                    Distance: ${vessel.distance_nm.toFixed(1)} nm
+                `);
+            
+            vesselMarkers.push(marker);
+        });
+        
+        console.log(`✅ Loaded ${data.count} vessels on main map`);
+        
+    } catch (error) {
+        console.error('❌ Failed to load vessels on main map:', error);
+    }
+}
+
+// Ensure vessel position is on water
+function ensureWaterPosition(lat, lon) {
+    // Simple check: if vessel is too close to land, move it offshore
+    
+    // Check if position is in San Francisco Bay area
+    if (lat > 37.7 && lat < 37.9 && lon > -122.5 && lon < -122.3) {
+        // Move to center of bay if too close to shore
+        if (lat > 37.8 || lon > -122.4) {
+            return { lat: 37.7749, lon: -122.4194 };
+        }
+    }
+    
+    // Check if position is in LA area
+    if (lat > 33.6 && lat < 34.0 && lon > -118.5 && lon < -118.0) {
+        // Move to offshore position
+        if (lat > 33.8 || lon > -118.3) {
+            return { lat: 33.6846, lon: -118.2376 };
+        }
+    }
+    
+    // Default: return original position
+    return { lat: lat, lon: lon };
+}
+
+// Update the loadVessels function to also update map markers
+async function loadVessels(lat = 37.7749, lon = -122.4194, radius = 50) {
+    try {
+        const response = await fetch(`/api/vessels/nearby?lat=${lat}&lon=${lon}&radius_nm=${radius}`);
+        const data = await response.json();
+
+        updateVesselsDisplay(data.vessels);
+        await loadVesselsOnMainMap();
+        console.log(`✅ Loaded ${data.count} nearby vessels`);
+
+    } catch (error) {
+        console.error('❌ Failed to load vessels:', error);
+    }
+}
+
 // Export functions for global access
 window.initApp = initApp;
 window.refreshData = refreshData;
@@ -463,3 +743,4 @@ window.loadWeather = loadWeather;
 window.loadVessels = loadVessels;
 window.toggleVessels = toggleVessels;
 window.toggleWeather = toggleWeather;
+window.showTab = showTab;

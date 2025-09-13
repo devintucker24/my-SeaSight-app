@@ -25,6 +25,9 @@ class RouteConstraints:
     avoid_storms: bool = True
     preferred_channels: bool = True
     safety_buffer_nm: float = 10.0
+    vessel_draft_m: float = 10.5
+    ukc_m: float = 0.6
+    apply_squat: bool = True
 
 
 @dataclass

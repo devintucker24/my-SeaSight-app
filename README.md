@@ -80,8 +80,9 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Set up environment variables (optional)
-cp maritime_app/config/settings.py.example maritime_app/config/settings.py
-# Edit settings.py with your API keys
+# Create a .env file and add your API keys. Refer to DOCUMENTATION.md for details.
+cp .env.example .env
+# Edit .env with your API keys for live data
 ```
 
 ### Running the Application
@@ -98,6 +99,9 @@ python -m maritime_app.main
 python run_web_app.py
 # Then open http://localhost:8000
 ```
+
+### Data Sources & Live Data
+By default, the application uses **sample data** for AIS vessel information and weather forecasts. To enable **real-time live data** collection from external APIs, you must configure your API keys in the `.env` file. Refer to the [DOCUMENTATION.md](DOCUMENTATION.md#data-sources--live-data-activation) for detailed instructions on obtaining and setting up API keys for AIS Stream and Tomorrow.io.
 
 ### Expected Output
 ```

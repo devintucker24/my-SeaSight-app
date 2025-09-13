@@ -367,6 +367,121 @@ body {
     box-shadow: 0 0 0 0.2rem rgba(0, 102, 204, 0.25);
 }
 
+/* Vessel and Weather Markers */
+.vessel-icon {
+    background: transparent !important;
+    border: none !important;
+}
+
+.vessel-marker {
+    width: 30px;
+    height: 30px;
+    background: var(--primary-blue);
+    border: 2px solid white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.vessel-marker:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.vessel-marker.fas.fa-oil-can {
+    background: var(--danger-red);
+}
+
+.vessel-marker.fas.fa-box {
+    background: var(--warning-orange);
+}
+
+.vessel-marker.fas.fa-users {
+    background: var(--accent-green);
+}
+
+.vessel-marker.fas.fa-fish {
+    background: #17a2b8;
+}
+
+.weather-icon {
+    background: transparent !important;
+    border: none !important;
+}
+
+.weather-marker {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%);
+    border: 2px solid white;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.weather-marker:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.weather-info {
+    font-size: 8px;
+    text-align: center;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+.waypoint-icon {
+    background: transparent !important;
+    border: none !important;
+}
+
+.waypoint-marker {
+    width: 25px;
+    height: 25px;
+    background: var(--accent-green);
+    border: 2px solid white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Tab Navigation */
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+.nav-link.active {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px;
+}
+
+/* Map Container Styles */
+#weather-map,
+#vessels-map {
+    border-radius: 0 0 12px 12px;
+}
+
 /* Print Styles */
 @media print {
     .navbar,

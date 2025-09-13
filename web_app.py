@@ -58,16 +58,13 @@ from maritime_app import (
 )
 
 # Configuration
-AISSTREAM_API_KEY = os.getenv("AISSTREAM_API_KEY", "911f6137097e02a129da0e1a60a5999e193f45b3")
-TOMORROW_IO_API_KEY = os.getenv("TOMORROW_IO_API_KEY", "xHCjSZ79QhO9KWq3Lubr9wb081zzrgK1")
-SF_BAY_BOUNDS = {
-    "north": 38.5,
-    "south": 36.5,
-    "east": -121.5,
-    "west": -123.5
-}
-TEST_LAT = 37.5
-TEST_LON = -122.5
+from maritime_app.config.settings import settings # Import settings
+
+AISSTREAM_API_KEY = settings.AISSTREAM_API_KEY # Use settings for API key
+TOMORROW_IO_API_KEY = settings.TOMORROW_IO_API_KEY # Use settings for API key
+SF_BAY_BOUNDS = settings.AIS_BOUNDS # Use settings for AIS bounds
+TEST_LAT = settings.DEFAULT_LAT # Use settings for default latitude
+TEST_LON = settings.DEFAULT_LON # Use settings for default longitude
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -127,7 +124,7 @@ async def startup_event():
         if not weather_data.empty and not ais_data.empty:
             print("🤖 Training ML models...")
             X, y = prepare_ml_data(weather_data, ais_data)
-            model, scaler = train_route_optimization_model(X, y)
+            model, scaler = train_route_optimization_model(X, y, settings.ML_MODEL_PATH)
             ml_models = {"model": model, "scaler": scaler}
             print("✅ ML models trained successfully!")
 
@@ -179,16 +176,20 @@ async def optimize_route_endpoint(route_request: Dict[str, Any]):
             )
         else:
             # Fallback to simple route
-            calc = EnhancedSailingCalculator()
-            waypoints = calc.calculate_waypoints(start_lat, start_lon, end_lat, end_lon, 15)
-            route = [(lat, lon) for lat, lon in waypoints]
+            calc = EnhancedSailingCalculator(settings)
+            waypoints = calc.generate_waypoints(start_lat, start_lon, end_lat, end_lon, 15)
+            
+            # Apply land avoidance to generated waypoints in fallback scenario
+            waypoints = calc.avoid_land_waypoints(waypoints)
+            
+            route = [(wp.latitude, wp.longitude) for wp in waypoints]
 
         # Calculate route metrics
         total_distance = 0
         if len(route) > 1:
-            calc = EnhancedSailingCalculator()
+            calc = EnhancedSailingCalculator(settings)
             for i in range(len(route) - 1):
-                dist = calc.great_circle_distance(
+                dist = calc.calculate_great_circle_distance(
                     route[i][0], route[i][1],
                     route[i+1][0], route[i+1][1]
                 )
@@ -320,8 +321,8 @@ async def refresh_data():
         print("🔄 Refreshing data...")
 
         # Collect fresh data
-        ais_collector = AISDataCollector(AISSTREAM_API_KEY, SF_BAY_BOUNDS, max_vessels=20)
-        fresh_ais = ais_collector.collect_data(duration_seconds=60)
+        ais_collector = AISDataCollector(AISSTREAM_API_KEY, SF_BAY_BOUNDS)
+        fresh_ais = ais_collector.start_collection(duration_seconds=60)
 
         fresh_open_meteo = fetch_open_meteo_weather(TEST_LAT, TEST_LON, hours=24)
         fresh_tomorrow = fetch_tomorrow_io_weather(TEST_LAT, TEST_LON, TOMORROW_IO_API_KEY, hours=24)

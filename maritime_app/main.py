@@ -27,7 +27,7 @@ class MaritimeRouteOptimizer:
         self.db = DatabaseManager()
         self.ais_collector = AISDataCollector()
         self.ml_processor = MaritimeMLDataProcessor()
-        self.route_optimizer = EnhancedSailingCalculator()
+        self.route_optimizer = EnhancedSailingCalculator(settings)
         self.visualizer = MaritimeVisualizer()
 
         print("✅ All components initialized successfully")
