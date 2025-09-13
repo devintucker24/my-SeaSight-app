@@ -1,7 +1,0 @@
-# Maritime Route Optimization API Keys
-# Copy this file to .env and fill in your actual keys.
-# DO NOT commit the .env file to source control.
-
-AISSTREAM_API_KEY="YOUR_AISSTREAM_API_KEY_HERE"
-TOMORROW_IO_API_KEY="YOUR_TOMORROW_IO_API_KEY_HERE"
-OPEN_METEO_API_KEY="YOUR_OPEN_METEO_API_KEY_HERE"

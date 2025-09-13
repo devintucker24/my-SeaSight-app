@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     OPEN_METEO_API_KEY: str = ""
 
     # Database settings
-    DATABASE_PATH: str = "maritime.db"
+    DATABASE_PATH: str = "data/maritime.db"
     @property
     def DATABASE_URL(self) -> str:
         return f"sqlite:///{self.DATABASE_PATH}"
