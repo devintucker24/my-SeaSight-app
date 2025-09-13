@@ -22,6 +22,20 @@
 - [x] Enhanced sailing calculations
 - [x] Matplotlib visualizations
 - [x] Command-line interface
+- [x] Advanced land avoidance using Shapely (min offing, land buffer caching)
+- [x] Adherence to Traffic Separation Scheme (TSS) laws and general channels
+- [x] Utilization of nautical chart data via pre-downloaded GeoJSON files
+- [x] Implementation of Under Keel Clearance (UKC) and squat calculations
+- [x] COLREGS enforcement (via TSS and restricted area avoidance)
+- [x] Avoidance of major land masses, islands, wrecks, obstructions, pipelines, and cables
+- [x] Avoidance of restricted/prohibited areas and shallow depth areas/contours
+- [x] Integration of safety depth and shallow/safety contour calculations
+- [x] Refactoring of `enc_loader.py` for robust GeoJSON generation and parsing
+- [x] Updates to `settings.py` for new navigation policies and chart paths
+- [x] Updates to `maritime_app/core/models.py` for depth and squat fields
+- [x] Extensive modifications to `maritime_app/routing/route_optimizer.py` for new avoidance logic
+- [x] Creation of `test_enhanced_routing.py` for comprehensive testing
+- [x] Updates to `web_app.py` and `maritime_app/__init__.py` for `settings` object passing
 
 ### 📊 Current Capabilities
 - **Data Sources:** AIS (44+ vessels), Weather (24h forecast)
@@ -38,6 +52,19 @@
 - **Vessel Performance:** No learning from actual vs. predicted performance
 - **ETA Accuracy:** Estimated times don't account for weather changes
 - **Real-Time Updates:** No continuous route optimization
+
+### 🗺️ Future Plans: S-57 ENC Data Integration
+**Priority:** HIGH | **Effort:** Very High | **Timeline:** To be determined
+
+**Goal:** Integrate rich S-57 Electronic Navigational Chart (ENC) data to further enhance routing accuracy, safety, and compliance with maritime regulations.
+
+**Key Tasks:**
+- [ ] Research and integrate a Python library for parsing S-57 ENC files (e.g., `pyS57`).
+- [ ] Refactor `enc_loader.py` to process raw S-57 data from designated `ENC_ROOT` directories.
+- [ ] Extract and convert detailed S-57 features (e.g., highly granular depth contours, precise buoy locations, detailed restricted areas, traffic lanes) into the application's GeoJSON format.
+- [ ] Update `route_optimizer.py` to leverage the richer S-57-derived data for more precise avoidance and preference logic.
+- [ ] Implement mechanisms for handling multiple ENC cells and seamless data stitching.
+- [ ] Explore methods for dynamic ENC updates and management.
 
 ---
 

@@ -1,7 +1,7 @@
 # Maritime Route Optimization - Documentation
 
 ## Overview
-A professional web application for maritime route optimization, weather intelligence, and fleet awareness. Backend: FastAPI. Frontend: HTML/JS with Leaflet. Real-time: WebSockets.
+A professional web application for maritime route optimization, weather intelligence, and fleet awareness. Backend: FastAPI. Frontend: HTML/JS with Leaflet. Real-time: WebSockets. Now features advanced land avoidance, adherence to TSS, UKC and squat calculations, and avoidance of various coastal hazards using pre-downloaded GeoJSON nautical chart data.
 
 ## Quick Start
 1. Create environment file:
@@ -37,6 +37,23 @@ Important settings and defaults:
 - `DEFAULT_LAT`, `DEFAULT_LON` (demo map center)
 - `EARTH_RADIUS_NM` (3440.065)
 - `WEATHER_FORECAST_HOURS` (72)
+- `MIN_OFFING_NM` (3.0)
+- `DEFAULT_VESSEL_DRAFT_M` (10.5)
+- `UKC_DEFAULT_M` (0.6)
+- `TSS_ENFORCEMENT` ("enforce" | "prefer")
+- `OPTIMIZE_INSIDE_PILOTAGE` (False)
+- `CHARTS_DIR` (default: `maritime_app/charts`)
+- `MARITIME_DATA_JSON` (default: `maritime_data.json`)
+- `COASTLINES_GEOJSON` (default: `ne_10m_coastline.json`)
+- `CACHED_LAND_BUFFER_GEOJSON` (default: `_cached_land_buffer.json`)
+- `TSS_CORRIDORS_GEOJSON` (default: `noaa_tss_corridors.json`)
+- `SEA_BUOYS_GEOJSON` (default: `noaa_sea_buoys.json`)
+- `PILOTAGE_ZONES_GEOJSON` (default: `noaa_pilotage_zones.json`)
+- `RESTRICTED_AREAS_GEOJSON` (default: `noaa_restricted_areas.json`)
+- `DEPTH_AREAS_GEOJSON` (default: `noaa_depth_areas.json`)
+- `WRECKS_OBSTRUCTIONS_GEOJSON` (default: `noaa_wrecks_obstructions.json`)
+- `PIPELINES_CABLES_GEOJSON` (default: `noaa_pipelines_cables.json`)
+- `SAFETY_DEPTH_MARGIN_M` (2.0)
 
 Access in code:
 ```python
@@ -120,17 +137,18 @@ ws.onopen = () => ws.send("hello"); // echo test
 ## Data & Models
 - Database: default SQLite at `DATABASE_PATH`.
 - ML: RandomForest models trained during startup/refresh if data exists.
-- Routing: Great-circle fallback via `EnhancedSailingCalculator` when ML not available.
+- Routing: Great-circle fallback via `EnhancedSailingCalculator` when ML not available. Now leverages pre-downloaded GeoJSON nautical chart data for enhanced land avoidance, TSS adherence, UKC/squat calculations, and avoidance of restricted areas, shallow depths, wrecks, obstructions, pipelines, and cables.
 
 ## Security
 - No secrets in code. Use `.env` (not committed).
 - Settings validated via Pydantic.
-- Next steps: security headers, auth (Google OAuth), logging, tests.
+- Implemented secure configuration management. Future steps include security headers, auth (Google OAuth), and enhanced logging and testing.
 
 ## Troubleshooting
 - If `uvicorn` not found: `pip install -r requirements.txt`
 - If startup fails due to missing keys: ensure `.env` exists and is loaded.
 - Health check: `curl http://localhost:8000/api/health`
+- If chart data loading issues occur: verify `maritime_app/charts/maritime_data.json` exists and references valid GeoJSON files. Ensure `_cached_land_buffer.json` is present or can be generated.
 
 ## License
 TBD.
