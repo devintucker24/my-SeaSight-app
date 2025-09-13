@@ -347,3 +347,9 @@ The modular architecture is Docker-ready for containerized deployment.
 ---
 
 *This maritime route optimization platform provides captains and navigation officers with professional-grade tools for safe, efficient, and economical voyage planning.*
+
+## Documentation
+
+For full API reference, setup steps, configuration via Pydantic settings, and WebSocket usage, see the documentation:
+
+- [DOCUMENTATION.md](DOCUMENTATION.md)
